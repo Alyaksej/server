@@ -8,65 +8,65 @@ extern crate libc;
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-    const SOCKET_IN_PATH: &str = "/tmp/socket_in.sock";
-    const SOCKET_OUT_PATH: &str = "/tmp/socket_out.sock";
-    const BUFFER_SIZE: usize = 1_000_000;
-    const BUFFER_THRESHOLD: usize = BUFFER_SIZE - 200_000;
+    const SOCKET_DATA_PATH: &str = "/tmp/socket_data.sock";
+    const SOCKET_RESULT_PATH: &str = "/tmp/socket_result.sock";
+    const DATA_SIZE: usize = 1_000_000;
+    const BUFFER_THRESHOLD: usize = DATA_SIZE - 200_000;
     // Remove socket before start
-    if fs::metadata(SOCKET_IN_PATH).is_ok() {
-        if let Err(e) = fs::remove_file(SOCKET_IN_PATH) {
+    if fs::metadata(SOCKET_DATA_PATH).is_ok() {
+        if let Err(e) = fs::remove_file(SOCKET_DATA_PATH) {
             eprintln!("Error removing socket file: {}", e);
             return Err(e);
         }
     };
-    // if fs::metadata(SOCKET_OUT_PATH).is_ok() {
-    //     if let Err(e) = fs::remove_file(SOCKET_OUT_PATH) {
+    // if fs::metadata(SOCKET_RESULT_PATH).is_ok() {
+    //     if let Err(e) = fs::remove_file(SOCKET_RESULT_PATH) {
     //         eprintln!("Error removing socket file: {}", e);
     //         return Err(e);
     //     }
     // };
     // Create socket
-    let socket_in = match UnixDatagram::bind(SOCKET_IN_PATH) {
-        Ok(socket_in) => socket_in,
+    let socket_data = match UnixDatagram::bind(SOCKET_DATA_PATH) {
+        Ok(socket_data) => socket_data,
         Err(e) => {
-            eprintln!("Error binding socket: {}", e);
+            eprintln!("Error binding socket data: {}", e);
             return Err(e);
         }
     };
 
-    // let socket_out = match UnixDatagram::bind(SOCKET_OUT_PATH){
-    //     Ok(socket_out) => socket_out,
+    // let socket_result = match UnixDatagram::bind(SOCKET_OUT_PATH){
+    //     Ok(socket_result) => socket_result,
     //     Err(e) => {
-    //         eprintln!("Error binding socket: {}", e);
+    //         eprintln!("Error binding socket result: {}", e);
     //         return Err(e);
     //     }
     // };
 
     let mut cnt_recv = 0;
     let mut whole_bytes = 0;
-    let mut buffer = vec![0; BUFFER_SIZE];
-    let mut buffer_offset: usize = 0;
+    let mut buffer_data = vec![0; DATA_SIZE];
+    let mut data_offset: usize = 0;
     let buf: [u8; 5] = [1, 2, 3, 4, 5];
 
     let mut now = Instant::now();
     let time = Instant::now();
 
     loop {
-        if buffer_offset >= BUFFER_THRESHOLD {
-            buffer_offset = 0;
+        if data_offset >= BUFFER_THRESHOLD {
+            data_offset = 0;
         }
-        let body_slice: &mut [u8] = &mut buffer[buffer_offset..];
-        //let _ = socket_in.readable().await;
-        let ready = socket_in.ready(Interest::READABLE | Interest::WRITABLE).await?;
-        //let _ = socket_out.writable().await;
+        let body_slice: &mut [u8] = &mut buffer_data[data_offset..];
+        //let _ = socket_data.readable().await;
+        let ready = socket_data.ready(Interest::READABLE).await?;
+        //let _ = socket_result.writable().await;
         if ready.is_readable() {
-            match socket_in.try_recv(body_slice) {
+            match socket_data.try_recv(body_slice) {
                 Ok(len_recv) => {
                     if len_recv > body_slice.len() {
                         println!("Error receiving data: data is to long");
                         return Err(io::Error::new(io::ErrorKind::Other, "Error receiving data: data is to long"));
                     };
-                    buffer_offset += len_recv;
+                    data_offset += len_recv;
                     cnt_recv += len_recv;
                 },
                 Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {
@@ -103,24 +103,6 @@ async fn main() -> io::Result<()> {
             server_bandwidth(cnt_recv, &mut whole_bytes, time);
             cnt_recv = 0;
             now = Instant::now();
-            //if fs::metadata(SOCKET_OUT_PATH).is_ok() {
-                let client_socket = UnixDatagram::unbound().unwrap();
-                let ready = client_socket.ready(Interest::WRITABLE).await?;
-                if ready.is_writable() {
-                    match client_socket.try_send_to(&buf, &SOCKET_OUT_PATH) {
-                        Ok(n) => {
-                            println!("!!!!!!!!!!!!!!!n: {} {:?}", n, buf)
-                        }
-                        Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {
-                            continue;
-                        }
-                        Err(e) => {
-                            println!("Connection SOCKET_OUT refused");
-                            continue;
-                        }
-                    }
-                }
-            //}
         }
     }
     Ok(())
