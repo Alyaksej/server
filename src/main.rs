@@ -2,9 +2,12 @@ use tokio::net::UnixDatagram;
 use tokio::io::Interest;
 use std::{fs, io};
 use std::time::Instant;
-use libc::connect;
 
 extern crate libc;
+
+// extern {
+//     fn array_processing (ptr_in: *mut c_int, n: c_int) -> *mut c_int;
+// }
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
@@ -46,7 +49,6 @@ async fn main() -> io::Result<()> {
     let mut whole_bytes = 0;
     let mut buffer_data = vec![0; DATA_SIZE];
     let mut data_offset: usize = 0;
-    let buf: [u8; 5] = [1, 2, 3, 4, 5];
 
     let mut now = Instant::now();
     let time = Instant::now();
