@@ -91,17 +91,24 @@ async fn main() -> io::Result<()> {
         let data = buffer_data.as_mut_ptr() as *mut c_void;
         let data_max_len = buffer_data.len() as c_int;
         let mut data_used_len: c_int = 0;
-        let mut result_out: *mut c_void = std::ptr::null_mut();
-        let mut result_max_len: c_int = 0;
-        let result_used_len: *mut c_int = std::ptr::null_mut();;
+        let mut result_out = vec![].as_mut_ptr();
+        let result_max_len: c_int = 0;
+        let mut result_used_len: c_int = 0;
+
         unsafe {
-            array_processing (data,
-                              data_max_len,
-                              &mut data_used_len,
-                              result_out,
-                              result_max_len,
-                              result_used_len
+            array_processing(data,
+                             data_max_len,
+                             &mut data_used_len,
+                             &mut result_out,
+                             result_max_len,
+                             &mut result_used_len
             );
+            if (data_used_len > 0) {
+                data_offset = data_max_len as usize - data_used_len as usize;
+                for _i in 0..data_used_len {
+                    buffer_data.copy_within(data_used_len as usize..DATA_SIZE, 0)
+                }
+            }
         }
 
         if now.elapsed().as_secs() >= 1 {
