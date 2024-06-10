@@ -1,13 +1,20 @@
 use tokio::net::UnixDatagram;
 use tokio::io::Interest;
 use std::{fs, io};
+use std::os::raw::{c_int, c_void};
 use std::time::Instant;
 
 extern crate libc;
 
-// extern {
-//     fn array_processing (ptr_in: *mut c_int, n: c_int) -> *mut c_int;
-// }
+extern {
+    fn array_processing (data: *mut c_void,
+                         data_max_len: c_int,
+                         data_used_len: *mut c_int,
+                         result_out: *mut c_void,
+                         result_max_len: c_int,
+                         result_used_len: *mut c_int
+    );
+}
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
@@ -81,24 +88,20 @@ async fn main() -> io::Result<()> {
             }
         }
         // Using of C-library
+        let data = buffer_data.as_mut_ptr() as *mut c_void;
+        let data_max_len = buffer_data.len() as c_int;
+        let mut data_used_len: c_int = 0;
+        let mut result_out: *mut c_void = std::ptr::null_mut();
+        let mut result_max_len: c_int = 0;
+        let result_used_len: *mut c_int = std::ptr::null_mut();;
         unsafe {
-            //let _result = byteToInt(lib_ptr, lib_len_max);
-            // for i in 0..MAX_NUMBERS {
-            //     println!("result: {}", *result.offset(i.try_into().unwrap()));
-            // }
-            // if ready.is_writable() {
-            //     match socket_in.try_send_to(&buf, &SOCKET_IN_PATH) {
-            //         Ok(n) => {
-            //             println!("!!!!!!!!!!!!!!!n: {} {:?}", n, buf)
-            //         }
-            //         Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {
-            //             continue;
-            //         }
-            //         Err(e) => {
-            //             return Err(e);
-            //         }
-            //     }
-            // }
+            array_processing (data,
+                              data_max_len,
+                              &mut data_used_len,
+                              result_out,
+                              result_max_len,
+                              result_used_len
+            );
         }
 
         if now.elapsed().as_secs() >= 1 {
