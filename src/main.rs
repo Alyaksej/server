@@ -1,16 +1,16 @@
 use tokio::net::UnixDatagram;
 use tokio::io::Interest;
 use std::{fs, io};
-use std::os::raw::{c_int, c_void};
+use std::os::raw::{c_int};
 use std::time::Instant;
 
 extern crate libc;
 
 extern {
-    fn array_processing (data: *mut c_void,
+    fn array_processing (data: *mut u8,
                          data_max_len: c_int,
                          data_used_len: *mut c_int,
-                         result_out: *mut c_void,
+                         result_out: *mut u8,
                          result_max_len: c_int,
                          result_used_len: *mut c_int
     );
@@ -20,7 +20,8 @@ extern {
 async fn main() -> io::Result<()> {
     const SOCKET_DATA_PATH: &str = "/tmp/socket_data.sock";
     const SOCKET_RESULT_PATH: &str = "/tmp/socket_result.sock";
-    const DATA_SIZE: usize = 1_000_000;
+    const DATA_SIZE: usize = 10_000_000;
+    const RESULT_SIZE: usize = 10;
     const BUFFER_THRESHOLD: usize = DATA_SIZE - 200_000;
     // Remove socket before start
     if fs::metadata(SOCKET_DATA_PATH).is_ok() {
@@ -54,8 +55,15 @@ async fn main() -> io::Result<()> {
 
     let mut cnt_recv = 0;
     let mut whole_bytes = 0;
-    let mut buffer_data = vec![0; DATA_SIZE];
+
+    let mut data_vec = vec![0; DATA_SIZE];
+    let data_c_ptr = data_vec.as_mut_ptr();
+    let data_max_len = data_vec.len() as c_int;
     let mut data_offset: usize = 0;
+
+    let mut result_vec = vec![0; RESULT_SIZE];
+    let result_c_ptr = result_vec.as_mut_ptr();
+    let result_max_len = result_vec.len() as c_int;
 
     let mut now = Instant::now();
     let time = Instant::now();
@@ -64,7 +72,7 @@ async fn main() -> io::Result<()> {
         if data_offset >= BUFFER_THRESHOLD {
             data_offset = 0;
         }
-        let body_slice: &mut [u8] = &mut buffer_data[data_offset..];
+        let body_slice: &mut [u8] = &mut data_vec[data_offset..];
         //let _ = socket_data.readable().await;
         let ready = socket_data.ready(Interest::READABLE).await?;
         //let _ = socket_result.writable().await;
@@ -88,33 +96,30 @@ async fn main() -> io::Result<()> {
             }
         }
         // Using of C-library
-        let data = buffer_data.as_mut_ptr() as *mut c_void;
-        let data_max_len = buffer_data.len() as c_int;
         let mut data_used_len: c_int = 0;
-        let mut result_out = vec![].as_mut_ptr();
-        let result_max_len: c_int = 0;
         let mut result_used_len: c_int = 0;
 
         unsafe {
-            array_processing(data,
+            array_processing(data_c_ptr,
                              data_max_len,
                              &mut data_used_len,
-                             &mut result_out,
+                             result_c_ptr,
                              result_max_len,
                              &mut result_used_len
             );
-            if (data_used_len > 0) {
+
+            if (result_used_len > 0) {
                 data_offset = data_max_len as usize - data_used_len as usize;
-                for _i in 0..data_used_len {
-                    buffer_data.copy_within(data_used_len as usize..DATA_SIZE, 0)
-                }
+                data_vec.copy_within(data_used_len as usize..data_offset , 0)
             }
         }
 
-        if now.elapsed().as_secs() >= 1 {
+        if now.elapsed().as_millis() >= 100 {
             server_bandwidth(cnt_recv, &mut whole_bytes, time);
             cnt_recv = 0;
             now = Instant::now();
+            println!("!!!!!!!!!!!!!!!!!!!!!!!result_out: {:?}", result_c_ptr);
+            println!("!!!!!!!!!!!!!!!!!!!!!!!result_used_len: {:?}", result_used_len);
         }
     }
     Ok(())
