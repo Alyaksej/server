@@ -21,7 +21,7 @@ async fn main() -> io::Result<()> {
     const SOCKET_DATA_PATH: &str = "/tmp/socket_data.sock";
     const SOCKET_RESULT_PATH: &str = "/tmp/socket_result.sock";
     const DATA_SIZE: usize = 10_000_000;
-    const RESULT_SIZE: usize = 10;
+    const RESULT_SIZE: usize = 100_000;
     const BUFFER_THRESHOLD: usize = DATA_SIZE - 200_000;
     // Remove socket before start
     if fs::metadata(SOCKET_DATA_PATH).is_ok() {
@@ -63,7 +63,7 @@ async fn main() -> io::Result<()> {
 
     let mut result_vec = vec![0; RESULT_SIZE];
     let result_c_ptr = result_vec.as_mut_ptr();
-    let result_max_len = result_vec.len() as c_int;
+    let result_max_len = 200_000;
 
     let mut now = Instant::now();
     let time = Instant::now();
@@ -108,13 +108,12 @@ async fn main() -> io::Result<()> {
                              &mut result_used_len
             );
 
-            if (result_used_len > 0) {
-                data_offset = data_max_len as usize - data_used_len as usize;
-                data_vec.copy_within(data_used_len as usize..data_offset , 0)
+            if result_used_len > 0 {
+                data_vec.copy_within(data_offset as usize..data_max_len as usize , 0);
             }
         }
 
-        if now.elapsed().as_millis() >= 100 {
+        if now.elapsed().as_secs() >= 1 {
             server_bandwidth(cnt_recv, &mut whole_bytes, time);
             cnt_recv = 0;
             now = Instant::now();
