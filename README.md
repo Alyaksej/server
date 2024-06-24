@@ -33,4 +33,19 @@ The `Cargo.toml` file contains the dependencies required by the server.
 tokio = { version = "1", features = ["full"] }
 libc = "0.2.0"
 ```
-The program also counts the megabytes received by the server and calculates the operating time of the program.
+The program also counts the megabytes received by the server and calculates the operating time of the program. 
+
+The file `build.rs` contains the name of the C library and its path.
+
+## Building and running the program
+
+As programm written o Rust you need to install `Cargo` and `rustup`  on your PC, process of instalation described [here](https://doc.rust-lang.org/cargo/getting-started/installation.html)
+
+Next step is clone project files to your PC usin command and build the programm
+```
+git clone git@github.com:Alyaksej/server.git
+cd server
+cargo build --release
+cd build/release
+./server
+```
