@@ -20,6 +20,17 @@ First of all we need to connect library `libc` for providing all of the definiti
 
 Then ve need to connect library `array_processing`, its description you can see [here](https://github.com/Alyaksej/array_processing)
 
-The program receives data via a Unix socket. The socket file is created automatically when the program is launched at /tmp/socket_data.sock
+After connecting the library we need to defining an external function `array_processing` using the Rust FFI to interface the function eritten on C.
 
-the maximum volume of the buffer receiving data is 2000,000,000 bytes,
+The program receives data via a Unix socket. The socket file is created automatically when the program is launched at `/tmp/socket_data.sock`
+
+the maximum volume of the buffer receiving data is 2000,000,000 bytes. After processing of recievin data array the result is writing to `result_c_ptr`.
+
+The `Cargo.toml` file contains the dependencies required by the server.
+
+```
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+libc = "0.2.0"
+```
+The program also counts the megabytes received by the server and calculates the operating time of the program.
