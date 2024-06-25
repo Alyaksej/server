@@ -73,7 +73,7 @@ async fn main() -> io::Result<()> {
 
     loop {
         if data_offset >= BUFFER_THRESHOLD {
-            // Add to log data, that was sbrosheny
+            println!("{:?}", data_vec);
             data_offset = 0;
         }
         let data_free_slice: &mut [u8] = &mut data_vec[data_offset..];
