@@ -1,0 +1,20 @@
+services:
+  server:
+    image: server:latest
+    pull_policy: always
+    build:
+      context: ../..
+      dockerfile: ../../Dockerfile
+    command:
+      - --logging.config=/app/data-volume/logback-test.xml
+    environment:
+      - JAVA_OPTS=
+        -Dreactor.schedulers.defaultPoolSize=6
+        -Dreactor.schedulers.defaultBoundedElasticSize=32
+        -Dreactor.schedulers.defaultBoundedElasticQueueSize=100000
+    ports:
+      - "8081:8081"
+      - "8082:8082/udp"
+    volumes:
+      - ./data-volume:/app/data-volume
+

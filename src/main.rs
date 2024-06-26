@@ -132,7 +132,7 @@ async fn main() -> io::Result<()> {
         let now = Instant::now();
         if (now - stats_start_ts).as_secs() >= STATS_PERIOD {
             whole_bytes += cnt_bytes;
-            println!("{} MB/sec {} MB total {} secs total work time ", cnt_bytes as u64 / (MBYTES * STATS_PERIOD), whole_bytes as u64 / (MBYTES * STATS_PERIOD), server_start_ts.elapsed().as_secs());
+            println!("{} MB/sec {} MB total {} secs elapsed time ", cnt_bytes as u64 / (MBYTES * STATS_PERIOD), whole_bytes as u64 / (MBYTES * STATS_PERIOD), server_start_ts.elapsed().as_secs());
             cnt_bytes = 0;
             stats_start_ts = now;
         }
