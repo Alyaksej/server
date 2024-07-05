@@ -6,13 +6,13 @@ COPY . .
 
 RUN chmod a+x /server/entrypoint.sh
 
-RUN ls -la
-
 RUN cargo build --release
 
-EXPOSE 80
+RUN ls /server
+
+EXPOSE 8081
 
 ENTRYPOINT [ "/server/entrypoint.sh" ]
 
-CMD [ "--server.port=80" ]
+CMD [ "target/release/server" ]
 

@@ -19,8 +19,8 @@ extern {
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-    const SOCKET_DATA_PATH: &str = "/tmp/socket_data.sock";
-    const SOCKET_RESULT_PATH: &str = "/tmp/socket_result.sock";
+    const SOCKET_DATA_PATH: &str = "/app/data-volume/socket_data.sock";
+    const SOCKET_RESULT_PATH: &str = "/app/data-volume/socket_result.sock";
     const DATA_SIZE: usize = 2000_000_000;
     const RESULT_SIZE: usize = 1000_000;
     const BUFFER_THRESHOLD: usize = DATA_SIZE - 200_000;
