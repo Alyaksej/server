@@ -19,3 +19,6 @@ services:
     build:
       context: /home/user/RustroverProjects/dataout
       dockerfile: /home/user/RustroverProjects/dataout/Dockerfile
+    volumes:
+      - ./data-volume:/app/data-volume
+
