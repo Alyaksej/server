@@ -33,13 +33,7 @@ async fn main() -> io::Result<()> {
             return Err(e);
         }
     };
-    // if fs::metadata(SOCKET_RESULT_PATH).is_ok() {
-    //     if let Err(e) = fs::remove_file(SOCKET_RESULT_PATH) {
-    //         eprintln!("Error removing socket file: {}", e);
-    //         return Err(e);
-    //     }
-    // };
-    // Create socket
+    // Create sockets
     let socket_data = match UnixDatagram::bind(SOCKET_DATA_PATH) {
         Ok(socket_data) => socket_data,
         Err(e) => {
@@ -48,13 +42,20 @@ async fn main() -> io::Result<()> {
         }
     };
 
-    // let socket_result = match UnixDatagram::bind(SOCKET_OUT_PATH){
-    //     Ok(socket_result) => socket_result,
-    //     Err(e) => {
-    //         eprintln!("Error binding socket result: {}", e);
-    //         return Err(e);
-    //     }
-    // };
+    if fs::metadata(SOCKET_RESULT_PATH).is_ok() {
+        if let Err(e) = fs::remove_file(SOCKET_RESULT_PATH) {
+            eprintln!("Error removing socket file: {}", e);
+            return Err(e);
+        }
+    };
+
+    let socket_result = match UnixDatagram::bind(SOCKET_RESULT_PATH){
+        Ok(socket_result) => socket_result,
+        Err(e) => {
+            eprintln!("Error binding socket result: {}", e);
+            return Err(e);
+        }
+    };
 
     let mut data_vec = vec![0; DATA_SIZE];
     let data_c_ptr = data_vec.as_mut_ptr();
@@ -77,9 +78,8 @@ async fn main() -> io::Result<()> {
             data_offset = 0;
         }
         let data_free_slice: &mut [u8] = &mut data_vec[data_offset..];
-        //let _ = socket_data.readable().await;
         let ready = socket_data.ready(Interest::READABLE).await?;
-        //let _ = socket_result.writable().await;
+        let _ = socket_result.writable().await;
         if ready.is_readable() {
             match socket_data.try_recv(data_free_slice) {
                 Ok(len_recv) => {
