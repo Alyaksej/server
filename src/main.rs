@@ -1,5 +1,5 @@
 use tokio::net::UnixDatagram;
-use tokio::io::Interest;
+use tokio::io::{Interest, Ready};
 use std::{fs, io};
 use std::os::raw::{c_int};
 use std::time::Instant;
@@ -19,8 +19,8 @@ extern {
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-    const SOCKET_DATA_PATH: &str = "/app/data-volume/socket_data.sock";
-    const SOCKET_RESULT_PATH: &str = "/app/data-volume/socket_result.sock";
+    const SOCKET_DATA_PATH: &str = "/tmp/socket_data.sock";
+    const SOCKET_RESULT_PATH: &str = "/tmp/socket_result.sock";
     const DATA_SIZE: usize = 2000_000_000;
     const RESULT_SIZE: usize = 1000_000;
     const BUFFER_THRESHOLD: usize = DATA_SIZE - 200_000;
@@ -80,6 +80,7 @@ async fn main() -> io::Result<()> {
         let data_free_slice: &mut [u8] = &mut data_vec[data_offset..];
         let ready = socket_data.ready(Interest::READABLE).await?;
         let _ = socket_result.writable().await;
+
         if ready.is_readable() {
             match socket_data.try_recv(data_free_slice) {
                 Ok(len_recv) => {
@@ -127,6 +128,7 @@ async fn main() -> io::Result<()> {
             if data_used_len > 0 {
                 data_vec.copy_within(data_used_len as usize..data_offset, 0);
                 data_offset = data_offset - data_used_len as usize;
+                socket_result.try_send(&result_vec);
             }
         }
         let now = Instant::now();
