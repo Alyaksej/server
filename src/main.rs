@@ -1,11 +1,11 @@
 mod server;
 mod test_client;
 
-use std::{fs, io};
+use std::{io};
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-    server::run_server();
-    test_client::run_client();
+    let serv = server::run_server();
+    let clie = test_client::run_test_client();
     Ok(())
 }
