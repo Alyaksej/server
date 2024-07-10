@@ -1,4 +1,22 @@
-pub(crate) fn run_server() {
+use tokio::net::UnixDatagram;
+use std::{fs, io};
+use std::time::Instant;
+use std::os::raw::{c_int};
+
+extern crate libc;
+
+extern {
+    fn array_processing(
+        data: *mut u8,
+        data_max_len: c_int,
+        data_used_len: *mut c_int,
+        result_out: *mut u8,
+        result_max_len: c_int,
+        result_used_len: *mut c_int,
+    );
+}
+
+pub(crate) async fn run_server() -> io::Result<()> {
     const SOCKET_DATA_PATH: &str = "/app/data-volume/socket_data.sock";
     const SOCKET_RESULT_PATH: &str = "/app/data-volume/socket_result.sock";
     const DATA_SIZE: usize = 2_000_000_000;
@@ -116,4 +134,5 @@ pub(crate) fn run_server() {
             stats_start_ts = now;
         }
     }
+    Ok(())
 }

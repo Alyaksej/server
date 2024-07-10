@@ -1,4 +1,7 @@
-pub(crate) fn run_client() {
+use tokio::net::UnixDatagram;
+use std::{fs, io};
+
+pub(crate) async fn run_test_client() -> io::Result<()> {
     const SOCKET_DATA_PATH: &str = "/app/data-volume/socket_data.sock";
     const SOCKET_RESULT_PATH: &str = "/app/data-volume/socket_result.sock";
     const BUFFER_SIZE: usize = 212_765;
@@ -64,4 +67,5 @@ pub(crate) fn run_client() {
             }
         }
     }
+    Ok(())
 }
