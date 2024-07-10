@@ -18,8 +18,8 @@ extern {
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-    const SOCKET_DATA_PATH: &str = "/tmp/socket_data.sock";
-    const SOCKET_RESULT_PATH: &str = "/tmp/socket_result.sock";
+    const SOCKET_DATA_PATH: &str = "/app/data-volume/socket_data.sock";
+    const SOCKET_RESULT_PATH: &str = "/app/data-volume/socket_result.sock";
     const DATA_SIZE: usize = 2_000_000_000;
     const RESULT_SIZE: usize = 1_000_000;
     const BUFFER_THRESHOLD: usize = DATA_SIZE - 200_000;
@@ -28,7 +28,7 @@ async fn main() -> io::Result<()> {
     // Remove socket before start
     if fs::metadata(SOCKET_DATA_PATH).is_ok() {
         if let Err(e) = fs::remove_file(SOCKET_DATA_PATH) {
-            eprintln!("Error removing socket file: {}", e);
+            eprintln!("Error removing socket data file: {}", e);
             return Err(e);
         }
     };
@@ -60,16 +60,12 @@ async fn main() -> io::Result<()> {
 
     loop {
         if data_offset >= BUFFER_THRESHOLD {
-            //println!("{:?}", data_vec);
-            //println!("!!!!!!!!!!!!!!BUFFER_THRESHOLD");
+            println!("{:?}", data_vec);
             data_offset = 0;
         }
         let data_free_slice: &mut [u8] = &mut data_vec[data_offset..];
         socket_data.readable().await?;
 
-        // if !ready.is_readable() {
-        //     continue;
-        // }
         match socket_data.try_recv_from(data_free_slice) {
             Ok((len_recv,addr)) => {
                 if len_recv >= data_free_slice.len() {
