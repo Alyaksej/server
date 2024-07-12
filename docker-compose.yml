@@ -17,8 +17,8 @@ services:
     depends_on:
       - server
     build:
-      context: /home/user/RustroverProjects/dataout
-      dockerfile: /home/user/RustroverProjects/dataout/Dockerfile
+      context: /home/user/RustroverProjects/server
+      dockerfile: /home/user/RustroverProjects/dataout/Dockerfile_client
     volumes:
       - ./data-volume:/app/data-volume
 
